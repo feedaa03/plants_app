@@ -4,10 +4,7 @@ struct ContentView: View {
     @State private var showSheet = false
     
     var body: some View {
-        ZStack(alignment: .topLeading) {
-            Color("BackGroundColor")
-                .ignoresSafeArea()
-            
+        VStack {
             // Header
             VStack(alignment: .leading, spacing: 8) {
                 Text("My Plants 🌱")
@@ -42,18 +39,12 @@ struct ContentView: View {
                 
                 Button(action: { showSheet = true }) {
                     Text("Set Plant Reminder")
-                    
                         .font(.headline.weight(.semibold))
-                        .foregroundColor(.black)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
-                        .buttonStyle(.glassProminent)
-                        .background(
-                            RoundedRectangle(cornerRadius: 23, style: .continuous)
-                                .fill(Color("greenbutton"))
-                        )
-                        .padding(.horizontal, 60) // controls button width
                 }
+                .buttonStyle(LiquidGlassButtonStyle(tint: Color("greenbutton")))
+                .padding(.horizontal, 60)
             }
             .padding()
         }
@@ -67,6 +58,16 @@ struct ContentView: View {
 private struct ReminderSheet: View {
     @Environment(\.dismiss) private var dismiss
     
+    @State private var selectedRoom = "Bedroom"
+    @State private var selectedLight = "Full Sun"
+    @State private var selectedWaterDays = "Every Day"
+    @State private var selectedWaterAmount = "20–50 ml"
+    @State private var activePicker: PickerType?
+    
+    enum PickerType {
+        case room, light, waterDays, waterAmount
+    }
+    
     var body: some View {
         NavigationStack {
             ZStack(alignment: .topLeading) {
@@ -74,9 +75,25 @@ private struct ReminderSheet: View {
                     .ignoresSafeArea()
                 
                 VStack(spacing: 20) {
+                    // Top Bar
+                    HStack {
+                        LiquidGlassCircleButton(systemName: "xmark", action: { dismiss() })
+                        
+                        Spacer()
+                        
+                        Text("Set Reminder")
+                            .font(.headline)
+                            .foregroundStyle(.white.opacity(0.9))
+                        
+                        Spacer()
+                        
+                        LiquidGlassCircleButton(systemName: "checkmark", tint: Color("greenbutton"), action: {})
+                    }
+                    .padding(.horizontal)
+                    .padding(.top)
+                    
                     Spacer().frame(height: 60)
                     
-                    // Text Field
                     GlassTextField(
                         text: .constant(""),
                         title: "Plant Name",
@@ -84,68 +101,64 @@ private struct ReminderSheet: View {
                         icon: nil
                     )
                     
-                    // Glass groups
                     GlassGroup {
-                        GlassRow(title: "Room", value: "Bedroom", icon: "location", showDivider: true)
-                        GlassRow(title: "Light", value: "Full Sun", icon: "sun.max.fill")
+                        GlassRow(title: "Room", value: selectedRoom, icon: "location", showDivider: true)
+                            .onTapGesture { activePicker = .room }
+                        
+                        GlassRow(title: "Light", value: selectedLight, icon: "sun.max.fill")
+                            .onTapGesture { activePicker = .light }
                     }
                     
                     GlassGroup {
-                        GlassRow(title: "Watering Days", value: "Every Day", icon: "drop.fill", showDivider: true)
-                        GlassRow(title: "Water", value: "20–50 ml", icon: "drop.fill")
+                        GlassRow(title: "Watering Days", value: selectedWaterDays, icon: "drop.fill", showDivider: true)
+                            .onTapGesture { activePicker = .waterDays }
+                        
+                        GlassRow(title: "Water", value: selectedWaterAmount, icon: "drop.fill")
+                            .onTapGesture { activePicker = .waterAmount }
                     }
                     
                     Spacer()
                 }
-                .padding()
-                .frame(maxWidth: 480)
-                
-                // Top Bar
-                HStack {
-                    // Dismiss (X)
-                    Button(action: { dismiss() }) {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 16, weight: .semibold))
-                            .buttonStyle(.glassProminent)
-                            .foregroundStyle(.white.opacity(0.8))
-                            .padding(10)
-                            .background(Circle().fill(.ultraThinMaterial))
-                            .overlay(
-                                Circle().strokeBorder(Color.white.opacity(0.25), lineWidth: 0.5)
-                            )
-                            .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
+                .padding(.bottom, 30)
+                .confirmationDialog("Select an option", isPresented: .constant(activePicker != nil), titleVisibility: .visible) {
+                    
+                    if activePicker == .room {
+                        Button("Bedroom") { selectedRoom = "Bedroom"; activePicker = nil }
+                        Button("Living Room") { selectedRoom = "Living Room"; activePicker = nil }
+                        Button("Balcony") { selectedRoom = "Balcony"; activePicker = nil }
+                        Button("kitchen") { selectedRoom = "Kitchen"; activePicker = nil }
+                        Button("Bathroom") { selectedRoom = "Bathroom"; activePicker = nil }
                     }
                     
-                    Spacer()
-                    
-                    Text("Set Reminder")
-                        .font(.headline)
-                        .foregroundStyle(.white.opacity(0.9))
-                    
-                    Spacer()
-                    
-                    // Confirm (✓)
-                    Button(action: {
-                        // TODO: Handle confirm action
-                    }) {
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(.white)
-                            .padding(10)
-                            .background(Circle().fill(Color("greenbutton")))
-                            .shadow(color: .black.opacity(0.25), radius: 10, x: 0, y: 6)
+                    if activePicker == .light {
+                        Button("Full Sun") { selectedLight = "Full Sun"; activePicker = nil }
+                        Button("Partial Shade") { selectedLight = "Partial Shade"; activePicker = nil }
+                        Button("Low Light") { selectedLight = "Low Light"; activePicker = nil }
                     }
+                    
+                    if activePicker == .waterDays {
+                        Button("Every Day") { selectedWaterDays = "Every Day"; activePicker = nil }
+                        Button("Every 2 Days") { selectedWaterDays = "Every 2 Days"; activePicker = nil }
+                        Button("Every 3 Days") { selectedWaterDays = "Every 3 Days"; activePicker = nil }
+                        Button("Once a week") { selectedWaterDays = "Once a week"; activePicker = nil }
+                        Button("Every 10 Days") { selectedWaterDays = "Every 10 Days"; activePicker = nil }
+                        Button("Every 2 weeks") { selectedWaterDays = "Every 2 weeks"; activePicker = nil }
+                    }
+                    if activePicker == .waterAmount {
+                        Button("20–50 ml") { selectedWaterAmount = "20–50 ml"; activePicker = nil }
+                        Button("50–100 ml") { selectedWaterAmount = "50–100 ml"; activePicker = nil }
+                        Button("100–200 ml") { selectedWaterAmount = "100–200 ml"; activePicker = nil }
+                        Button("200–300 ml") { selectedWaterAmount = "200–300 ml"; activePicker = nil }
+                    }
+                    
+                    Button("Cancel", role: .cancel) { activePicker = nil }
                 }
-                .padding(.horizontal)
-                .padding(.top)
             }
-            .navigationBarTitleDisplayMode(.inline)
-            .background(.thinMaterial)
         }
     }
 }
 
-// MARK: - Reusable Components
+// MARK: - Reusable Components (بدون Glass Effect)
 
 struct GlassTextField: View {
     @Binding var text: String
@@ -155,12 +168,13 @@ struct GlassTextField: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            if let title {
-                Text(title)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundColor(.white.opacity(0.9))
-            }
             HStack(spacing: 12) {
+                if let title {
+                    Text(title)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundColor(.white.opacity(0.9))
+                }
+                
                 if let icon, !icon.isEmpty {
                     Image(systemName: icon)
                         .foregroundColor(.white.opacity(0.7))
@@ -174,8 +188,8 @@ struct GlassTextField: View {
         }
         .padding()
         .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(.ultraThinMaterial)
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color.white.opacity(0.08)) // ← خلفية ثابتة بدون blur
         )
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -193,8 +207,8 @@ struct GlassGroup<Content: View>: View {
             content
         }
         .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(.ultraThinMaterial)
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color.white.opacity(0.06)) // ← بدون glass
         )
         .overlay(
             RoundedRectangle(cornerRadius: 20)
@@ -245,7 +259,79 @@ struct GlassRow: View {
     }
 }
 
+// MARK: - Liquid Glass Styles
+struct LiquidGlassButtonStyle: ButtonStyle {
+    var tint: Color = .white
+    var cornerRadius: CGFloat = 23
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .contentShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .foregroundStyle(.white)
+            .frame(maxWidth: .infinity)
+            .background(
+                ZStack {
+                    // Base translucent glass
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .fill(.ultraThinMaterial)
+
+                    // Tint wash
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .fill(tint.opacity(0.25))
+
+                    // Subtle inner highlight
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .fill(
+                            LinearGradient(colors: [Color.white.opacity(0.25), Color.white.opacity(0.05)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                        )
+                        .blendMode(.plusLighter)
+                        .opacity(configuration.isPressed ? 0.15 : 0.3)
+                }
+            )
+            .overlay(
+                // Glass rim
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .strokeBorder(Color.white.opacity(0.25), lineWidth: 1)
+            )
+            .shadow(color: .black.opacity(configuration.isPressed ? 0.15 : 0.28), radius: configuration.isPressed ? 6 : 14, x: 0, y: configuration.isPressed ? 2 : 8)
+            .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.8), value: configuration.isPressed)
+    }
+}
+
+struct LiquidGlassCircleButton: View {
+    var systemName: String
+    var tint: Color? = nil
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: systemName)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: 36, height: 36)
+                .background(
+                    ZStack {
+                        Circle().fill(.ultraThinMaterial)
+                        if let tint {
+                            Circle().fill(tint.opacity(0.28))
+                        }
+                        Circle().fill(
+                            AngularGradient(gradient: Gradient(colors: [Color.white.opacity(0.18), Color.clear, Color.white.opacity(0.12)]), center: .center)
+                        ).blendMode(.plusLighter)
+                    }
+                )
+                .overlay(
+                    Circle().strokeBorder(Color.white.opacity(0.28), lineWidth: 1)
+                )
+                .shadow(color: .black.opacity(0.25), radius: 10, x: 0, y: 6)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
 // MARK: - Preview
 #Preview {
-    ContentView()
+    ContentView().preferredColorScheme(.dark)
 }
+
